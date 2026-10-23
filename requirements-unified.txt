@@ -1,0 +1,9 @@
+# First-stage unified application: preserve both original dependency sets.
+-r apps/workbench/requirements.txt
+-r apps/mvp0/requirements.txt
+-e .
+
+# Existing UI modules import these directly (not consistently in their
+# historical requirements); some features still need local service setup.
+PyYAML>=6
+scikit-learn>=1.3

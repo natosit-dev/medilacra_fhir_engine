@@ -1,0 +1,245 @@
+{
+  "schema_version": "0.1",
+  "status": "source-integrity-verified-behavior-parity-pending",
+  "source_repository": "natosit-dev/medilacra",
+  "source_commit": "2202e0b5503b60eaffba5e6ff0341df143a58008",
+  "entries": [
+    {
+      "source_path": "connectathon/__init__.py",
+      "engine_path": "src/connectathon/__init__.py",
+      "source_blob_sha": "a6ac064b8b1d42afd4a6e057fa8df56298aeb010"
+    },
+    {
+      "source_path": "connectathon/shn_bulk_crd.py",
+      "engine_path": "src/connectathon/shn_bulk_crd.py",
+      "source_blob_sha": "04d9897c8b5b55cc697d076a6a4bb1a4cf98e9b1"
+    },
+    {
+      "source_path": "connectathon/shn_bulk_dtr.py",
+      "engine_path": "src/connectathon/shn_bulk_dtr.py",
+      "source_blob_sha": "90101e8e36a2b7dda68f2c57a3d73a5d06a39705"
+    },
+    {
+      "source_path": "connectathon/shn_bulk_pas.py",
+      "engine_path": "src/connectathon/shn_bulk_pas.py",
+      "source_blob_sha": "68b55e489256946ed4042d9c08449003aa6c568c"
+    },
+    {
+      "source_path": "connectathon/shn_dtr_questionnaire_response.py",
+      "engine_path": "src/connectathon/shn_dtr_questionnaire_response.py",
+      "source_blob_sha": "efd34150b6606a9555a351fb0ff1aeb2bbe94616"
+    },
+    {
+      "source_path": "connectathon/shn_live_baseline_00301/crd-00301.json",
+      "engine_path": "src/connectathon/shn_live_baseline_00301/crd-00301.json",
+      "source_blob_sha": "415fa91c5b118d2f4aa5474448d0ec2686674927"
+    },
+    {
+      "source_path": "connectathon/shn_live_baseline_00301/dtr-00301.json",
+      "engine_path": "src/connectathon/shn_live_baseline_00301/dtr-00301.json",
+      "source_blob_sha": "e83dfe8828edc2d25b057fd75c58571ab6be3bb8"
+    },
+    {
+      "source_path": "connectathon/shn_live_baseline_00301/pas-00301.json",
+      "engine_path": "src/connectathon/shn_live_baseline_00301/pas-00301.json",
+      "source_blob_sha": "13052df255f88c4a420bad04f4f4d87d8c906142"
+    },
+    {
+      "source_path": "connectathon/shn_lumbar_fusion_dtr.py",
+      "engine_path": "src/connectathon/shn_lumbar_fusion_dtr.py",
+      "source_blob_sha": "b0369ec71a00f48abf671294d19934e4b93aa9a4"
+    },
+    {
+      "source_path": "connectathon/shn_lumbar_fusion_pas.py",
+      "engine_path": "src/connectathon/shn_lumbar_fusion_pas.py",
+      "source_blob_sha": "7d60a51841b25e569694331c38bd1cef9752272f"
+    },
+    {
+      "source_path": "connectathon/shn_lumbar_fusion.py",
+      "engine_path": "src/connectathon/shn_lumbar_fusion.py",
+      "source_blob_sha": "96d71b523a8df5ad11b5aafa519cd1739bb8f548"
+    },
+    {
+      "source_path": "connectathon/shn_medilacra_crd.py",
+      "engine_path": "src/connectathon/shn_medilacra_crd.py",
+      "source_blob_sha": "ff78912727d6cc60652ca8484548876f233b7d2d"
+    },
+    {
+      "source_path": "connectathon/shn_mvp0.py",
+      "engine_path": "src/connectathon/shn_mvp0.py",
+      "source_blob_sha": "07ade49841b9573f701c05af254b9414b8e132d2"
+    },
+    {
+      "source_path": "connectathon/shn_provider/crd.py",
+      "engine_path": "src/connectathon/shn_provider/crd.py",
+      "source_blob_sha": "b3fc490464f1e134019bcfd7e78201675dd639b7"
+    },
+    {
+      "source_path": "connectathon/shn_provider/dtr.py",
+      "engine_path": "src/connectathon/shn_provider/dtr.py",
+      "source_blob_sha": "b75a396254cb5b628af9f918cfd86f5a4025c64a"
+    },
+    {
+      "source_path": "connectathon/shn_provider/inquiry.py",
+      "engine_path": "src/connectathon/shn_provider/inquiry.py",
+      "source_blob_sha": "f2889ed4daa095656792bee70e56054423d0aa5f"
+    },
+    {
+      "source_path": "connectathon/shn_provider/mutations.py",
+      "engine_path": "src/connectathon/shn_provider/mutations.py",
+      "source_blob_sha": "7fdc04869b9b0d996f9c30f6f7cad383d579d051"
+    },
+    {
+      "source_path": "connectathon/shn_provider/pas.py",
+      "engine_path": "src/connectathon/shn_provider/pas.py",
+      "source_blob_sha": "54b95e85c095a3301bd135ee52dac3a22003b472"
+    },
+    {
+      "source_path": "connectathon/shn_provider/reference_payloads.py",
+      "engine_path": "src/connectathon/shn_provider/reference_payloads.py",
+      "source_blob_sha": "39354a47f55e0fda1107adba69f3d6b4246735fa"
+    },
+    {
+      "source_path": "connectathon/shn_provider/scenario_registry.py",
+      "engine_path": "src/connectathon/shn_provider/scenario_registry.py",
+      "source_blob_sha": "293e5da08a5515a8bfaeefedbadea30916b05916"
+    },
+    {
+      "source_path": "connectathon/shn_provider/scenario.py",
+      "engine_path": "src/connectathon/shn_provider/scenario.py",
+      "source_blob_sha": "144627835cc93adfa10ff0bac3a46f59e544334e"
+    },
+    {
+      "source_path": "connectathon/shn_provider/state.py",
+      "engine_path": "src/connectathon/shn_provider/state.py",
+      "source_blob_sha": "7310b589a316a8f88754b6482bc947f35db6f392"
+    },
+    {
+      "source_path": "connectathon/shn_provider/summaries.py",
+      "engine_path": "src/connectathon/shn_provider/summaries.py",
+      "source_blob_sha": "c996bd51d18c7fc7afb0bbbef7d972bff5629c4b"
+    },
+    {
+      "source_path": "connectathon/shn_provider/test_case.py",
+      "engine_path": "src/connectathon/shn_provider/test_case.py",
+      "source_blob_sha": "732eae1ff9336e3ce41f684f0baea61ffa94e7cd"
+    },
+    {
+      "source_path": "connectathon/shn_rule_matrix.py",
+      "engine_path": "src/connectathon/shn_rule_matrix.py",
+      "source_blob_sha": "a4046ab97f6a84c5c81cce60885485801f94e098"
+    },
+    {
+      "source_path": "connectathon/shn_scenarios/explicit_not_covered.json",
+      "engine_path": "src/connectathon/shn_scenarios/explicit_not_covered.json",
+      "source_blob_sha": "900b22b4a05cff53a1a0dedbf33fa8c8b5bf7d1b"
+    },
+    {
+      "source_path": "connectathon/shn_scenarios/lumbar_fusion.json",
+      "engine_path": "src/connectathon/shn_scenarios/lumbar_fusion.json",
+      "source_blob_sha": "533985ea1859dc3c32e36782a3b5554f28d44733"
+    },
+    {
+      "source_path": "connectathon/shn_scenarios/no_rule_default.json",
+      "engine_path": "src/connectathon/shn_scenarios/no_rule_default.json",
+      "source_blob_sha": "6ff081b33b72f5666042adb332ba39141effb704"
+    },
+    {
+      "source_path": "connectathon/shn_scenarios/schema.json",
+      "engine_path": "src/connectathon/shn_scenarios/schema.json",
+      "source_blob_sha": "3f8d29819d380ed39f1686aea46ca7a169102e65"
+    },
+    {
+      "source_path": "connectathon/shn_test_cases/negatives/tn01_unknown_payer.json",
+      "engine_path": "src/connectathon/shn_test_cases/negatives/tn01_unknown_payer.json",
+      "source_blob_sha": "5521afb1d22c810bdcabe82b8468342d71f6aabd"
+    },
+    {
+      "source_path": "connectathon/shn_test_cases/negatives/tn02_missing_coverage_unknown_member.json",
+      "engine_path": "src/connectathon/shn_test_cases/negatives/tn02_missing_coverage_unknown_member.json",
+      "source_blob_sha": "e0f6b957358ce5ff3b206aba7e35d11626c8d1ee"
+    },
+    {
+      "source_path": "connectathon/shn_test_cases/negatives/tn03_bad_patient_linkage.json",
+      "engine_path": "src/connectathon/shn_test_cases/negatives/tn03_bad_patient_linkage.json",
+      "source_blob_sha": "f7a5e40401fd92f560da0f842e93bf7f56638af5"
+    },
+    {
+      "source_path": "connectathon/shn_test_cases/negatives/tn04_remove_coverage_beneficiary.json",
+      "engine_path": "src/connectathon/shn_test_cases/negatives/tn04_remove_coverage_beneficiary.json",
+      "source_blob_sha": "e60bff525652310889b70e5f437871de2a2df27e"
+    },
+    {
+      "source_path": "connectathon/shn_test_cases/negatives/tn05_identifier_only_claim_patient.json",
+      "engine_path": "src/connectathon/shn_test_cases/negatives/tn05_identifier_only_claim_patient.json",
+      "source_blob_sha": "54e083738f1a639b643e290ccee88ab441699dea"
+    },
+    {
+      "source_path": "connectathon/shn_test_cases/negatives/tn06_bad_questionnaire_version.json",
+      "engine_path": "src/connectathon/shn_test_cases/negatives/tn06_bad_questionnaire_version.json",
+      "source_blob_sha": "49dfae69e6cb5413ff24d9398906aa87f89addbe"
+    },
+    {
+      "source_path": "connectathon/shn_test_cases/negatives/tn07_hook_service_mismatch.json",
+      "engine_path": "src/connectathon/shn_test_cases/negatives/tn07_hook_service_mismatch.json",
+      "source_blob_sha": "c3e2eee9813ec8ee8afe54d1637b518bb632906f"
+    },
+    {
+      "source_path": "connectathon/shn_test_cases/negatives/tn08_order_dispatch.json",
+      "engine_path": "src/connectathon/shn_test_cases/negatives/tn08_order_dispatch.json",
+      "source_blob_sha": "6c5e2ded06bd29ab4c15a3fd9d93c5bafa820587"
+    },
+    {
+      "source_path": "connectathon/shn_test_cases/negatives/tn09_reuse_correlation_id.json",
+      "engine_path": "src/connectathon/shn_test_cases/negatives/tn09_reuse_correlation_id.json",
+      "source_blob_sha": "6aaaf349ac12a963ba7908a9f5f2b8b876303133"
+    },
+    {
+      "source_path": "connectathon/shn_test_cases/negatives/tn10_expired_token.json",
+      "engine_path": "src/connectathon/shn_test_cases/negatives/tn10_expired_token.json",
+      "source_blob_sha": "77ddc41c97f5974f06e8516010358219d3377876"
+    },
+    {
+      "source_path": "connectathon/shn_test_cases/schema.json",
+      "engine_path": "src/connectathon/shn_test_cases/schema.json",
+      "source_blob_sha": "67cbd1383e346c456c728d73ccbfdcadabc626cb"
+    },
+    {
+      "source_path": "connectathon/shn_test_cases/tp01_00301_round_trip.json",
+      "engine_path": "src/connectathon/shn_test_cases/tp01_00301_round_trip.json",
+      "source_blob_sha": "46c77cd3e11cfe5a23387d1d1a23b72df1c727cb"
+    },
+    {
+      "source_path": "connectathon/shn_test_cases/tp02_00300_approval.json",
+      "engine_path": "src/connectathon/shn_test_cases/tp02_00300_approval.json",
+      "source_blob_sha": "4b4e3e031a1dd42a1a014b17de964b1298ac13b8"
+    },
+    {
+      "source_path": "connectathon/shn_test_cases/tp03_00300_pend_task.json",
+      "engine_path": "src/connectathon/shn_test_cases/tp03_00300_pend_task.json",
+      "source_blob_sha": "d3e2f8c2f69412e53e59849c9844804ba927ccfc"
+    },
+    {
+      "source_path": "connectathon/shn_test_cases/tp04_00300_not_certified.json",
+      "engine_path": "src/connectathon/shn_test_cases/tp04_00300_not_certified.json",
+      "source_blob_sha": "09bc42d1b182a1136f186e19c2cea199a0390995"
+    },
+    {
+      "source_path": "connectathon/shn_test_cases/tp05_inquiry.json",
+      "engine_path": "src/connectathon/shn_test_cases/tp05_inquiry.json",
+      "source_blob_sha": "6c86c960e2739bd924f13d3b1d02b8288edc9b46"
+    },
+    {
+      "source_path": "hl7_demo/__init__.py",
+      "engine_path": "src/hl7_demo/__init__.py",
+      "source_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "source_path": "hl7_demo/models.py",
+      "engine_path": "src/hl7_demo/models.py",
+      "source_blob_sha": "b6f7998e62352cca95ccfc20e8176b0248e93b64"
+    }
+  ],
+  "source_initializer_excluded": "connectathon/shn_provider/__init__.py; replaced with import-safe shim",
+  "additional_files_pending": false
+}

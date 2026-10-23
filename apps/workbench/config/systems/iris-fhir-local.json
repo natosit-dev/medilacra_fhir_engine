@@ -1,0 +1,31 @@
+{
+  "id": "iris-fhir-local",
+  "name": "Local IRIS FHIR Server",
+  "base_url": "http://localhost:52773/csp/healthshare/piqitt/fhir/r4",
+  "protocol": "fhir",
+  "fhir_version": "4.0.1",
+  "format": "json",
+  "credential_profile": "none",
+  "test_path": "/metadata",
+  "tls": {
+    "verify": false
+  },
+  "identity": {
+    "user_key_header": null,
+    "user_key": null,
+    "organization_key_header": null,
+    "organization_key": null
+  },
+  "default_headers": {
+    "Accept": "application/fhir+json"
+  },
+  "notes": [
+    "Native local IRIS FHIR base used for the PIQITT namespace.",
+    "The namespace path is case-sensitive in this deployment and must be lower-case: piqitt.",
+    "Port 52773 is plain HTTP in this local IRIS deployment; do not attempt a TLS handshake against it.",
+    "GET /metadata is reachable without authentication, so the built-in default credential profile is none.",
+    "Select iris-basic explicitly for operations that require authentication.",
+    "Override locally with config/systems/local/iris-fhir-local.json if the local deployment changes.",
+    "Credential values remain environment/local-only."
+  ]
+}

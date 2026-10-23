@@ -1,0 +1,99 @@
+{
+  "resourceType": "TestScript",
+  "id": "iris-patient-crud",
+  "url": "https://medilacra.local/TestScript/iris-patient-crud",
+  "version": "0.1",
+  "name": "IRISPatientCRUD",
+  "status": "draft",
+  "description": "Create/update a fixed synthetic Patient, read it back, then delete it.",
+  "fixture": [
+    {
+      "id": "patient-fixture",
+      "autocreate": false,
+      "autodelete": false,
+      "resource": {
+        "reference": "fixtures/patient-workbench.json"
+      }
+    }
+  ],
+  "setup": {
+    "action": [
+      {
+        "id": "put-patient",
+        "operation": {
+          "label": "PUT synthetic Patient",
+          "method": "PUT",
+          "url": "/Patient/medilacra-workbench-patient",
+          "sourceId": "patient-fixture",
+          "contentType": "application/fhir+json",
+          "accept": "application/fhir+json",
+          "responseId": "patient-put-response",
+          "encodeRequestUrl": true
+        }
+      }
+    ]
+  },
+  "test": [
+    {
+      "name": "Read synthetic Patient",
+      "action": [
+        {
+          "id": "get-patient",
+          "operation": {
+            "label": "GET synthetic Patient",
+            "method": "GET",
+            "url": "/Patient/medilacra-workbench-patient",
+            "accept": "application/fhir+json",
+            "responseId": "patient-read-response",
+            "encodeRequestUrl": true
+          }
+        },
+        {
+          "id": "assert-patient-read-status",
+          "assert": {
+            "label": "HTTP 200",
+            "sourceId": "patient-read-response",
+            "responseCode": "200",
+            "warningOnly": false,
+            "direction": "response"
+          }
+        },
+        {
+          "id": "assert-patient-resource",
+          "assert": {
+            "label": "Patient returned",
+            "sourceId": "patient-read-response",
+            "resource": "Patient",
+            "warningOnly": false,
+            "direction": "response"
+          }
+        },
+        {
+          "id": "assert-patient-id",
+          "assert": {
+            "label": "Expected Patient id",
+            "sourceId": "patient-read-response",
+            "path": "id",
+            "operator": "equals",
+            "value": "medilacra-workbench-patient",
+            "warningOnly": false,
+            "direction": "response"
+          }
+        }
+      ]
+    }
+  ],
+  "teardown": {
+    "action": [
+      {
+        "id": "delete-patient",
+        "operation": {
+          "label": "DELETE synthetic Patient",
+          "method": "DELETE",
+          "url": "/Patient/medilacra-workbench-patient",
+          "encodeRequestUrl": true
+        }
+      }
+    ]
+  }
+}

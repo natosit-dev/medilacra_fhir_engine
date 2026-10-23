@@ -1,0 +1,47 @@
+{
+  "resourceType": "TestScript",
+  "id": "iris-capability-statement",
+  "url": "https://medilacra.local/TestScript/iris-capability-statement",
+  "version": "0.1",
+  "name": "IRISCapabilityStatement",
+  "status": "draft",
+  "description": "Read the local IRIS FHIR CapabilityStatement.",
+  "test": [
+    {
+      "name": "FHIR metadata",
+      "action": [
+        {
+          "id": "get-metadata",
+          "operation": {
+            "label": "GET /metadata",
+            "method": "GET",
+            "url": "/metadata",
+            "accept": "application/fhir+json",
+            "responseId": "metadata-response",
+            "encodeRequestUrl": true
+          }
+        },
+        {
+          "id": "assert-metadata-status",
+          "assert": {
+            "label": "HTTP 200",
+            "sourceId": "metadata-response",
+            "responseCode": "200",
+            "warningOnly": false,
+            "direction": "response"
+          }
+        },
+        {
+          "id": "assert-capability-statement",
+          "assert": {
+            "label": "CapabilityStatement returned",
+            "sourceId": "metadata-response",
+            "resource": "CapabilityStatement",
+            "warningOnly": false,
+            "direction": "response"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "resourceType": "Patient",
+  "id": "medilacra-workbench-patient",
+  "active": true,
+  "name": [
+    {
+      "family": "Workbench",
+      "given": ["MediLacra"]
+    }
+  ]
+}

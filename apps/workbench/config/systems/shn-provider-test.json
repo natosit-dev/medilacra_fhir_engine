@@ -1,0 +1,31 @@
+{
+  "id": "shn-provider-test",
+  "name": "SHN Provider Test Endpoint",
+  "base_url": "https://pa-test.shn-preview.org",
+  "protocol": "mixed",
+  "fhir_version": "4.0.1",
+  "format": "json",
+  "credential_profile": "shn-provider-client-secret",
+  "test_path": "/healthz",
+  "tls": {
+    "verify": true
+  },
+  "identity": {
+    "user_key_header": null,
+    "user_key": null,
+    "organization_key_header": null,
+    "organization_key": null
+  },
+  "default_headers": {},
+  "correlation": {
+    "request_header": "X-Correlation-Id",
+    "response_header": "X-Correlation-Id",
+    "leg_header": "X-SHN-Leg-Id",
+    "trace_url_template": "https://admin.shn-preview.org/connectathon/trace/{id}",
+    "generate_uuid": true
+  },
+  "notes": [
+    "Provider-side SHN Connectathon/test endpoint.",
+    "CRD uses JSON while DTR and PAS carry FHIR JSON; protocol is intentionally marked mixed."
+  ]
+}

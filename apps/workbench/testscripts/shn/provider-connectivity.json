@@ -1,0 +1,47 @@
+{
+  "resourceType": "TestScript",
+  "id": "shn-provider-connectivity",
+  "url": "https://medilacra.local/TestScript/shn-provider-connectivity",
+  "version": "0.1",
+  "name": "SHNProviderConnectivity",
+  "status": "draft",
+  "description": "Minimal SHN provider endpoint smoke test using the public CDS service listing.",
+  "test": [
+    {
+      "name": "CDS service listing",
+      "action": [
+        {
+          "id": "get-cds-services",
+          "operation": {
+            "label": "GET /cds-services",
+            "method": "GET",
+            "url": "/cds-services",
+            "accept": "application/json",
+            "responseId": "cds-services-response",
+            "encodeRequestUrl": true
+          }
+        },
+        {
+          "id": "assert-cds-status",
+          "assert": {
+            "label": "HTTP 200",
+            "sourceId": "cds-services-response",
+            "responseCode": "200",
+            "warningOnly": false,
+            "direction": "response"
+          }
+        },
+        {
+          "id": "assert-services-present",
+          "assert": {
+            "label": "services array present",
+            "sourceId": "cds-services-response",
+            "path": "services",
+            "warningOnly": false,
+            "direction": "response"
+          }
+        }
+      ]
+    }
+  ]
+}

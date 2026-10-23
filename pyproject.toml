@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "medilacra-fhir-engine"
+version = "0.1.0"
+description = "Source-preserved FHIR and ePA builders, synthetic scenarios, and cohort primitives"
+requires-python = ">=3.10"
+dependencies = ["Faker>=20"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["connectathon*", "hl7_demo*", "medilacra_fhir_engine*"]
+
+[tool.setuptools.package-data]
+connectathon = [
+  "shn_scenarios/*.json",
+  "shn_test_cases/*.json",
+  "shn_test_cases/negatives/*.json",
+  "shn_live_baseline_00301/*.json"
+]
