@@ -2,7 +2,7 @@ name: Unified Medilacra tests
 
 on:
   push:
-    branches: [main, feat/unified-medilacra]
+    branches: [main, feat/unified-medilacra, feat/m004-multiformat-eligibility]
   pull_request:
 
 jobs:
@@ -14,7 +14,7 @@ jobs:
         with:
           python-version: "3.10"
       - name: Install Engine and Workbench dependencies
-        run: python -m pip install -e ".[dev]" -r apps/workbench/requirements.txt
+        run: python -m pip install -r requirements-unified.txt
       - name: Engine source integrity and unified navigation tests
         run: python -m pytest -q tests
       - name: Workbench regression tests
@@ -29,6 +29,23 @@ jobs:
             tests/test_shn_reference_suite.py \
             tests/test_shn_provider_workflow.py \
             tests/test_shn_dtr_questionnaire_response.py
+      - name: M-004 eligibility, payer, cross-format, and DiScO regression
+        run: |
+          cd apps/mvp0
+          python -m pytest -q \
+            tests/test_core_generator_offline_sdoh.py \
+            tests/test_coverage*.py \
+            tests/test_fhir_coverage_conversion.py \
+            tests/test_fhir_eligibility_r4.py \
+            tests/test_fhir_pipeline_integration.py \
+            tests/test_fhir_x12_semantic_equivalence.py \
+            tests/test_gt1_employer_mvp.py \
+            tests/test_payer*.py \
+            tests/test_reality_separation.py \
+            tests/test_x12_*.py \
+            tests/test_disco_inferno.py \
+            tests/test_disco_inferno_offline_sdoh.py \
+            tests/test_disco_inferno_process_control.py
       - name: MVP-0 reference CLI import smoke
         run: |
           cd apps/mvp0
