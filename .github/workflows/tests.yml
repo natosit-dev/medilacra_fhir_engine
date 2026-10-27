@@ -61,8 +61,8 @@ jobs:
           PIQITT_REPO: ${{ github.workspace }}/piqitt
         run: |
           cd apps/mvp0
-          python -m pytest -q \\
-            tests/test_piqitt_bridge_discovery.py \\
+          python -m pytest -q \
+            tests/test_piqitt_bridge_discovery.py \
             tests/test_connectathon_piqitt_integration.py
       - name: MVP-0 reference CLI import smoke
         run: |
