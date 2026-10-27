@@ -50,6 +50,20 @@ jobs:
             tests/test_disco_inferno.py \
             tests/test_disco_inferno_offline_sdoh.py \
             tests/test_disco_inferno_process_control.py
+      - name: Checkout pinned PIQITT converter for M-003 deferred path
+        uses: actions/checkout@v4
+        with:
+          repository: natosit-dev/piqitt
+          ref: a40300e4950d73ed192a2112cf516b4ec46a184b
+          path: piqitt
+      - name: PIQI conversion, discovery and mutation integration
+        env:
+          PIQITT_REPO: ${{ github.workspace }}/piqitt
+        run: |
+          cd apps/mvp0
+          python -m pytest -q \\
+            tests/test_piqitt_bridge_discovery.py \\
+            tests/test_connectathon_piqitt_integration.py
       - name: MVP-0 reference CLI import smoke
         run: |
           cd apps/mvp0

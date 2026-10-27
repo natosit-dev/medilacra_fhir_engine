@@ -13,13 +13,29 @@ _BACKEND_CACHE: dict[str, ModuleType] = {}
 
 
 def default_piqitt_repo() -> Path:
-    """Return the most likely local PIQITT checkout without requiring it to be installed."""
+    """Find a separate PIQITT checkout in either the unified or legacy layout.
+
+    Original MediLacra lived directly beside PIQITT. The unified application
+    moved it to apps/mvp0/, so using the old module-relative sibling now points
+    at apps/piqitt/ instead of the actual workspace sibling checkout.
+    PIQITT_REPO always overrides automatic discovery.
+    """
     configured = os.getenv("PIQITT_REPO")
     if configured:
         return Path(configured).expanduser().resolve()
 
     medilacra_root = Path(__file__).resolve().parents[1]
-    return (medilacra_root.parent / "piqitt").resolve()
+    unified_root = medilacra_root.parents[1]
+    candidates = (
+        unified_root.parent / "piqitt",  # ~/code/piqitt, sibling checkout
+        unified_root / "piqitt",         # optional checkout inside unified repo
+        medilacra_root.parent / "piqitt",  # original/legacy lookup
+    )
+    for candidate in candidates:
+        if (candidate / "scripts" / "fhir_convert_backend.py").is_file():
+            return candidate.resolve()
+    # For fresh installations, show the intended workspace sibling path.
+    return candidates[0].resolve()
 
 
 def backend_path(piqitt_repo: str | Path | None = None) -> Path:
@@ -36,7 +52,9 @@ def load_backend(piqitt_repo: str | Path | None = None) -> ModuleType:
     path = backend_path(piqitt_repo)
     if not path.exists():
         raise FileNotFoundError(
-            f"PIQITT converter not found at {path}. Set PIQITT_REPO or select the local PIQITT checkout."
+            f"PIQITT converter not found at {path}. "
+            "Clone https://github.com/natosit-dev/piqitt alongside the unified repository "
+            "or set PIQITT_REPO to an existing checkout containing scripts/fhir_convert_backend.py."
         )
 
     cache_key = str(path)
