@@ -32,6 +32,7 @@ PAGES: tuple[ExistingPage, ...] = (
     ExistingPage("Operational Reality", "mvp0-connectivity", "MVP-0 Connectivity", "apps/mvp0/pages/1_medi_lacra_connectivity.py", "📡"),
 
     # Existing full workflows and research/demo experiments.
+    ExistingPage("Workflows & Experiments", "x12-eligibility", "X12 Eligibility (270/271)", "apps/mvp0/pages/8_X12_Eligibility.py", "📨"),
     ExistingPage("Workflows & Experiments", "shn-provider-epa", "SHN Provider ePA", "apps/mvp0/pages/10_SHN_Provider_ePA.py", "🔁"),
     ExistingPage("Workflows & Experiments", "piqi-connectathon", "PIQI Connectathon 43", "apps/mvp0/pages/9_PIQI_Connectathon_43.py", "🔬"),
     ExistingPage("Workflows & Experiments", "disco-inferno", "DiScO Inferno", "apps/mvp0/pages/8_Disco_Inferno.py", "🔥"),

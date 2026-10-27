@@ -25,6 +25,7 @@ from .segments import (
     seg_dg1,
     seg_gt1,
     seg_in1,
+    seg_in2,
     seg_obx_gender_identity,
     seg_obx_pronouns,
     seg_obx_spcu,
@@ -65,6 +66,68 @@ from .generators import (
 AIRNOW_MILES_DEFAULT = 75
 
 
+def _patient_age_at_encounter(
+    patient: Patient,
+    encounter: Encounter,
+) -> int | None:
+    """
+    Return the patient's age on the encounter/admit date.
+
+    If either date cannot be interpreted as YYYY-MM-DD (optionally followed
+    by time), return None so callers can avoid inventing an adult guarantor
+    relationship.
+    """
+    try:
+        dob = datetime.strptime(
+            str(patient.date_of_birth)[:10],
+            "%Y-%m-%d",
+        ).date()
+
+        encounter_date = datetime.strptime(
+            str(encounter.admit_datetime)[:10],
+            "%Y-%m-%d",
+        ).date()
+
+        return (
+            encounter_date.year
+            - dob.year
+            - (
+                (
+                    encounter_date.month,
+                    encounter_date.day,
+                )
+                < (
+                    dob.month,
+                    dob.day,
+                )
+            )
+        )
+
+    except (TypeError, ValueError):
+        return None
+
+
+def _should_emit_gt1(
+    patient: Patient,
+    encounter: Encounter,
+) -> bool:
+    """
+    GT1 MVP rule: only emit for patients strictly older than 18.
+
+    Age 18 or younger, or an unparseable age, produces no GT1 because
+    family/dependent guarantor relationships are intentionally out of scope.
+    """
+    age = _patient_age_at_encounter(
+        patient,
+        encounter,
+    )
+
+    return (
+        age is not None
+        and age > 18
+    )
+
+
 # =========================================================================
 # ADT^A01
 # =========================================================================
@@ -80,6 +143,7 @@ def build_adt(
     add_unemployment_obx: bool = False,
     miles: int = AIRNOW_MILES_DEFAULT,
     obs: Optional[Observation] = None,
+    include_sdoh: bool = True,
 
     # Gender Harmony flags.
     #
@@ -100,11 +164,15 @@ def build_adt(
         PV1
         OBX  SDOH / vitals / Gender Harmony
         DG1  admitting diagnosis
-        GT1  guarantor, when transaction data is available
+        GT1  self-guarantor/employer, for patients >18 when transaction data is available
         IN1  insurance, when transaction data is available
 
     Transaction is optional so existing callers can still build an ADT
     without financial/insurance information.
+
+    include_sdoh is a master switch for external SDOH enrichment. When false,
+    AirNow/Census/PLACES/BLS lookups are skipped entirely. Synthetic vitals
+    still render using neutral local inputs (poverty=0, AQI=50).
     """
 
     # ---------------------------------------------------------------------
@@ -127,7 +195,7 @@ def build_adt(
     # Air quality
     # ---------------------------------------------------------------------
 
-    if add_air_obx and getattr(p, "zip_code", ""):
+    if include_sdoh and add_air_obx and getattr(p, "zip_code", ""):
         aq = get_air_quality_by_zip(
             p.zip_code
         )
@@ -146,7 +214,7 @@ def build_adt(
     # Poverty
     # ---------------------------------------------------------------------
 
-    if add_poverty_obx and getattr(p, "zip_code", ""):
+    if include_sdoh and add_poverty_obx and getattr(p, "zip_code", ""):
         poverty = get_poverty_pct_by_zcta(
             p.zip_code
         )
@@ -177,25 +245,31 @@ def build_adt(
             ).year
         )
 
-        poverty = (
-            get_poverty_pct_by_zcta(
+        if include_sdoh:
+            poverty = (
+                get_poverty_pct_by_zcta(
+                    p.zip_code
+                )
+                or 0.0
+            )
+
+            air_quality = get_air_quality_by_zip(
                 p.zip_code
             )
-            or 0.0
-        )
 
-        air_quality = get_air_quality_by_zip(
-            p.zip_code
-        )
-
-        if air_quality:
-            aqi_value = float(
-                air_quality.get(
-                    "aqi",
-                    50,
+            if air_quality:
+                aqi_value = float(
+                    air_quality.get(
+                        "aqi",
+                        50,
+                    )
                 )
-            )
+            else:
+                aqi_value = 50.0
         else:
+            # Offline/default core generation: preserve synthetic vitals
+            # without making external SDOH requests.
+            poverty = 0.0
             aqi_value = 50.0
 
         vital_values = predict_vitals(
@@ -226,7 +300,7 @@ def build_adt(
     # Additional public SDOH measures
     # ---------------------------------------------------------------------
 
-    if add_places_obesity_obx:
+    if include_sdoh and add_places_obesity_obx:
         obesity_obx = build_obx_places_obesity(
             p.zip_code,
             set_id=set_id,
@@ -237,7 +311,7 @@ def build_adt(
             set_id += 1
 
 
-    if add_unemployment_obx:
+    if include_sdoh and add_unemployment_obx:
         unemployment_obx = build_obx_unemployment(
             p.zip_code,
             set_id=set_id,
@@ -371,19 +445,40 @@ def build_adt(
     # Transaction is optional to keep build_adt backward compatible.
 
     if tx is not None:
-        parts.append(
-            seg_gt1(
-                tx,
-                set_id=1,
-            )
+        coverage_profile = getattr(
+            p,
+            "coverage_profile",
+            None,
         )
+
+        if _should_emit_gt1(
+            p,
+            enc,
+        ):
+            parts.append(
+                seg_gt1(
+                    tx,
+                    patient=p,
+                    coverage_profile=coverage_profile,
+                    set_id=1,
+                )
+            )
 
         parts.append(
             seg_in1(
                 tx,
+                patient=p,
+                coverage_profile=coverage_profile,
                 set_id=1,
             )
         )
+
+        if coverage_profile is not None:
+            parts.append(
+                seg_in2(
+                    coverage_profile,
+                )
+            )
 
 
     return "\r".join(parts)
@@ -487,7 +582,7 @@ def build_dft(
         PV1
         FT1...
         DG1...
-        GT1
+        GT1  (only when patient age >18)
         IN1
 
     DFT requires an EVN segment in HL7 v2.5.
@@ -582,19 +677,40 @@ def build_dft(
     if txs:
         primary_transaction = txs[0]
 
-        parts.append(
-            seg_gt1(
-                primary_transaction,
-                set_id=1,
-            )
+        coverage_profile = getattr(
+            p,
+            "coverage_profile",
+            None,
         )
+
+        if _should_emit_gt1(
+            p,
+            enc,
+        ):
+            parts.append(
+                seg_gt1(
+                    primary_transaction,
+                    patient=p,
+                    coverage_profile=coverage_profile,
+                    set_id=1,
+                )
+            )
 
         parts.append(
             seg_in1(
                 primary_transaction,
+                patient=p,
+                coverage_profile=coverage_profile,
                 set_id=1,
             )
         )
+
+        if coverage_profile is not None:
+            parts.append(
+                seg_in2(
+                    coverage_profile,
+                )
+            )
 
 
     return "\r".join(parts)

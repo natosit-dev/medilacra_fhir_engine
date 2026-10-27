@@ -22,11 +22,16 @@ logger = get_logger(name="MediLacra", context={"component": "pipeline"})
 # -----------------------------
 try:
     from hl7_demo.generators import gen_patient, gen_encounter, gen_transaction, gen_observation
+    from hl7_demo.coverage import assign_coverage_profile
     from hl7_demo.reports import load_reports
     from hl7_demo.messages import build_adt, build_oru, build_dft, build_orm_labs, build_oru_labs
 except ModuleNotFoundError:
     try:
         from generators import gen_patient, gen_encounter, gen_transaction, gen_observation
+        try:
+            from coverage import assign_coverage_profile  # type: ignore
+        except Exception:
+            from .coverage import assign_coverage_profile  # type: ignore
         from reports import load_reports
         # Prefer local import if present; fall back to relative (package) import
         try:
@@ -37,6 +42,22 @@ except ModuleNotFoundError:
         logger.error("Failed to import generators/reports/messages", extra={"extra": {"error": str(e)}})
         raise
 
+from eligibility.generation import (
+    EligibilityRunContext,
+    build_eligibility_inquiry_from_clinical,
+)
+from fhir.eligibility_generation import (
+    generate_fhir_eligibility_artifacts,
+    write_fhir_eligibility_artifacts,
+)
+from payer.materialize import materialize_payer_from_clinical
+from payer.system import PayerSystem
+from x12.generation import (
+    X12RunContext,
+    generate_x12_eligibility_artifacts,
+    write_x12_artifacts,
+)
+
 # -----------------------------
 # Optional persistence backend (DuckDB)
 # -----------------------------
@@ -45,6 +66,8 @@ try:
     from storage_duckdb_entities import (
         init_db as duck_init,
         upsert_patient, upsert_encounter, upsert_observation, upsert_transaction,
+        upsert_coverage_profile,
+        upsert_payer_member, upsert_payer_enrollment, upsert_payer_plan,
         append_message as duck_append_message,
         DEFAULT_DB_PATH as DUCK_DEFAULT_DB_PATH,
     )
@@ -126,6 +149,9 @@ def run_pipeline(
     add_places_obesity_obx: bool = False,
     add_unemployment_obx: bool = False,
     include_labs: bool = True,
+    include_sdoh: bool = False,
+    include_x12: bool = False,
+    include_fhir_eligibility: bool = False,
     persist: str = "none",
     scenario_profile: dict | None = None,
     duckdb_path: Optional[str] = None
@@ -141,6 +167,15 @@ def run_pipeline(
     persist:
       - "duckdb": upsert entities + append message log using storage_duckdb_entities
       - "none"  : filesystem only (no DB persistence)
+
+    include_sdoh:
+      - False by default: no AirNow/Census/PLACES/BLS lookups are attempted
+      - True: enable external SDOH enrichment for ADT generation
+
+    Eligibility projections:
+      - include_x12 generates X12 270/271
+      - include_fhir_eligibility generates FHIR R4 4.0.1 request/response
+      - both consume the same semantic inquiry and payer response
     """
     from faker import Faker  # local import to avoid module cost if unused by caller
 
@@ -158,11 +193,41 @@ def run_pipeline(
     logger.info("Reports loaded", extra={"extra": {"report_glob": report_glob, "report_rows": getattr(reports, 'shape', ('?', '?'))[0] if hasattr(reports, 'shape') else "unknown"}})
 
     # ---- Generate a run id (used in message log persistence)
-    run_ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_at = datetime.now()
+    run_ts = run_at.strftime("%Y%m%d_%H%M%S")
     run_id = f"run_{run_ts}"
 
     # ---- Counters (return value)
-    counts: Dict[str, int] = {"ADT": 0, "ORU": 0, "DFT": 0, "ORM": 0, "ORU_LABS": 0}
+    counts: Dict[str, int] = {
+        "ADT": 0,
+        "ORU": 0,
+        "DFT": 0,
+        "ORM": 0,
+        "ORU_LABS": 0,
+    }
+    if include_x12:
+        counts["X12_270"] = 0
+        counts["X12_271"] = 0
+    if include_fhir_eligibility:
+        counts["FHIR_ELIGIBILITY_REQUEST"] = 0
+        counts["FHIR_ELIGIBILITY_RESPONSE"] = 0
+
+    # ---- Optional eligibility workload state
+    include_eligibility = (
+        include_x12
+        or include_fhir_eligibility
+    )
+    eligibility_run_context = (
+        EligibilityRunContext(run_at)
+        if include_eligibility
+        else None
+    )
+    x12_run_context = (
+        X12RunContext(run_at)
+        if include_x12
+        else None
+    )
+    payer_systems: Dict[str, PayerSystem] = {}
 
     # ---- Optional DuckDB init
     db_path = duckdb_path or DUCK_DEFAULT_DB_PATH
@@ -184,6 +249,9 @@ def run_pipeline(
         "per_encounter": per_encounter,
         "bulk": bulk,
         "include_labs": include_labs,
+        "include_sdoh": include_sdoh,
+        "include_x12": include_x12,
+        "include_fhir_eligibility": include_fhir_eligibility,
         "persist": persist,
         "miles": miles,
         "sdoh_flags": {"places_obesity": add_places_obesity_obx, "unemployment": add_unemployment_obx},
@@ -193,15 +261,109 @@ def run_pipeline(
         try:
             # ---- Generate synthetic entities (one patient/encounter set)
             p = gen_patient()
+            coverage = assign_coverage_profile(
+                p,
+                seed=seed,
+            )
             e = gen_encounter(p.patient_id, profile=scenario_profile)
-            t = gen_transaction(e.encounter_id)
+            t = gen_transaction(
+                e.encounter_id,
+                coverage_profile=coverage,
+            )
             report_row = reports.sample(n=1).iloc[0]
             o = gen_observation(e, report_row)
+
+            payer_member = None
+            payer_enrollment = None
+            payer_plan = None
+            payer_system = None
+            eligibility_identity = None
+            eligibility_inquiry = None
+            eligibility_response = None
+            x12_artifacts = None
+            fhir_eligibility_artifacts = None
+
+            if include_eligibility:
+                payer_member, payer_enrollment, payer_plan = (
+                    materialize_payer_from_clinical(
+                        p,
+                        coverage,
+                    )
+                )
+
+                payer_system = payer_systems.get(
+                    coverage.payer_id
+                )
+                if payer_system is None:
+                    payer_system = PayerSystem(
+                        coverage.payer_id
+                    )
+                    payer_systems[coverage.payer_id] = (
+                        payer_system
+                    )
+
+                payer_system.add_member(payer_member)
+                payer_system.add_enrollment(
+                    payer_enrollment
+                )
+                payer_system.add_plan(payer_plan)
+
+                assert eligibility_run_context is not None
+                eligibility_identity = (
+                    eligibility_run_context.next_exchange()
+                )
+                eligibility_inquiry = (
+                    build_eligibility_inquiry_from_clinical(
+                        p,
+                        coverage,
+                        e,
+                    )
+                )
+                eligibility_response = (
+                    payer_system.evaluate_eligibility(
+                        eligibility_inquiry
+                    )
+                )
+
+                if include_x12:
+                    assert x12_run_context is not None
+                    x12_artifacts = (
+                        generate_x12_eligibility_artifacts(
+                            inquiry=eligibility_inquiry,
+                            response=eligibility_response,
+                            exchange_identity=eligibility_identity,
+                            encounter_id=e.encounter_id,
+                            coverage_profile=coverage,
+                            payer_member=payer_member,
+                            payer_plan=payer_plan,
+                            run_context=x12_run_context,
+                        )
+                    )
+
+                if include_fhir_eligibility:
+                    fhir_eligibility_artifacts = (
+                        generate_fhir_eligibility_artifacts(
+                            patient=p,
+                            coverage_profile=coverage,
+                            inquiry=eligibility_inquiry,
+                            response=eligibility_response,
+                            exchange_identity=eligibility_identity,
+                            run_at=run_at,
+                            payer_member=payer_member,
+                            payer_enrollment=payer_enrollment,
+                            payer_plan=payer_plan,
+                            encounter_id=e.encounter_id,
+                        )
+                    )
 
             logger.info("Entities generated", extra={"extra": {
                 "i": idx + 1,
                 "patient_id": getattr(p, "patient_id", None),
-                "encounter_id": getattr(e, "encounter_id", None)
+                "encounter_id": getattr(e, "encounter_id", None),
+                "coverage_profile_id": getattr(coverage, "coverage_profile_id", None),
+                "employer_id": getattr(coverage, "employer_id", None),
+                "payer_id": getattr(coverage, "payer_id", None),
+                "plan_id": getattr(coverage, "plan_id", None)
             }})
 
             # ---- Persist entities (DuckDB only)
@@ -209,18 +371,49 @@ def run_pipeline(
                 try:
                     payload = lambda x: x.__dict__ if hasattr(x, "__dict__") else dict(x)
                     upsert_patient(payload(p), db_path=db_path)
+                    upsert_coverage_profile(payload(coverage), db_path=db_path)
                     upsert_encounter(payload(e), db_path=db_path)
                     upsert_transaction(payload(t), db_path=db_path)
                     upsert_observation(payload(o), db_path=db_path)
+
+                    if include_eligibility:
+                        assert payer_member is not None
+                        assert payer_enrollment is not None
+                        assert payer_plan is not None
+                        upsert_payer_member(
+                            payload(payer_member),
+                            db_path=db_path,
+                        )
+                        upsert_payer_enrollment(
+                            payload(payer_enrollment),
+                            db_path=db_path,
+                        )
+                        upsert_payer_plan(
+                            payload(payer_plan),
+                            db_path=db_path,
+                        )
                 except Exception as pe:
                     logger.error("DuckDB entity upsert failed", extra={"extra": {"error": str(pe)}})
                     raise
 
             # ---- Build HL7 messages for this encounter
             adt = build_adt(
-                p, e, miles=miles, obs=o,
-                add_places_obesity_obx=add_places_obesity_obx,
-                add_unemployment_obx=add_unemployment_obx
+                p,
+                e,
+                tx=t,
+                miles=miles,
+                obs=o,
+                include_sdoh=include_sdoh,
+                add_air_obx=include_sdoh,
+                add_poverty_obx=include_sdoh,
+                add_places_obesity_obx=(
+                    include_sdoh
+                    and add_places_obesity_obx
+                ),
+                add_unemployment_obx=(
+                    include_sdoh
+                    and add_unemployment_obx
+                ),
             )
             oru = build_oru(p, e, [o])
             dft = build_dft(p, e, [t], [o])
@@ -304,6 +497,76 @@ def run_pipeline(
                             logger.error("DuckDB message log append failed", extra={"extra": {"type": name, "path": path, "error": str(le)}})
                             raise
 
+            # ---- Write X12 eligibility pair separately from HL7 persistence
+            if include_x12:
+                assert x12_artifacts is not None
+                try:
+                    x12_paths = write_x12_artifacts(
+                        x12_artifacts,
+                        out_dir=out_dir,
+                        run_ts=run_ts,
+                        per_encounter=per_encounter,
+                        safe_encounter=safe_enc,
+                    )
+                    counts["X12_270"] += 1
+                    counts["X12_271"] += 1
+                    logger.info(
+                        "Wrote X12 eligibility pair",
+                        extra={"extra": {
+                            "encounter_id": e.encounter_id,
+                            "trace_id": x12_artifacts.trace_id,
+                            "x270_path": x12_paths["X12_270"],
+                            "x271_path": x12_paths["X12_271"],
+                        }},
+                    )
+                except OSError as ioe:
+                    logger.error(
+                        "X12 file write failed",
+                        extra={"extra": {
+                            "encounter_id": e.encounter_id,
+                            "error": str(ioe),
+                        }},
+                    )
+                    raise
+
+            # ---- Write direct FHIR R4 eligibility projections
+            if include_fhir_eligibility:
+                assert fhir_eligibility_artifacts is not None
+                try:
+                    fhir_paths = write_fhir_eligibility_artifacts(
+                        fhir_eligibility_artifacts,
+                        out_dir=out_dir,
+                        run_ts=run_ts,
+                        per_encounter=per_encounter,
+                        safe_encounter=safe_enc,
+                    )
+                    counts["FHIR_ELIGIBILITY_REQUEST"] += 1
+                    counts["FHIR_ELIGIBILITY_RESPONSE"] += 1
+                    logger.info(
+                        "Wrote FHIR R4 eligibility pair",
+                        extra={"extra": {
+                            "encounter_id": e.encounter_id,
+                            "exchange_id": (
+                                fhir_eligibility_artifacts.exchange_id
+                            ),
+                            "request_path": fhir_paths[
+                                "FHIR_ELIGIBILITY_REQUEST"
+                            ],
+                            "response_path": fhir_paths[
+                                "FHIR_ELIGIBILITY_RESPONSE"
+                            ],
+                        }},
+                    )
+                except OSError as ioe:
+                    logger.error(
+                        "FHIR eligibility file write failed",
+                        extra={"extra": {
+                            "encounter_id": e.encounter_id,
+                            "error": str(ioe),
+                        }},
+                    )
+                    raise
+
         except Exception as e:
             # A single encounter failure is bubbled up (unchanged behavior),
             # but we include a detailed log entry to diagnose quickly.
@@ -328,6 +591,9 @@ def run_and_persist(
     # New flags accepted silently by older callers
     add_places_obesity_obx: bool = False,
     add_unemployment_obx: bool = False,
+    include_sdoh: bool = False,
+    include_x12: bool = False,
+    include_fhir_eligibility: bool = False,
 ) -> Dict[str, int]:
     """
     Legacy entry point matching older callers (kept to avoid breaking pages).
@@ -344,6 +610,9 @@ def run_and_persist(
         miles=miles,
         add_places_obesity_obx=add_places_obesity_obx,
         add_unemployment_obx=add_unemployment_obx,
+        include_sdoh=include_sdoh,
+        include_x12=include_x12,
+        include_fhir_eligibility=include_fhir_eligibility,
         persist="duckdb",
         duckdb_path=db_path,
     )
@@ -362,7 +631,10 @@ if __name__ == "__main__":
     ap.add_argument("--out", type=str, default="out", help="Output folder")
     ap.add_argument("--miles", type=int, default=0, help="Distance delta for SDOH logic in ADT")
     ap.add_argument("--add-places-obesity-obx", action="store_true", help="Emit Places/Obesity OBX in ADT")
-    ap.add_argument("--add-unemployment-obx", action="store_true", help="Emit Unemployment OBX in ADT")
+    ap.add_argument("--add-unemployment-obx", action="store_true", help="Emit Unemployment OBX in ADT when --include-sdoh is enabled")
+    ap.add_argument("--include-sdoh", action="store_true", help="Enable external AirNow/Census/PLACES/BLS SDOH enrichment")
+    ap.add_argument("--include-x12", action="store_true", help="Generate X12 270/271 eligibility output")
+    ap.add_argument("--include-fhir-eligibility", action="store_true", help="Generate FHIR R4 4.0.1 eligibility request/response bundles")
     ap.add_argument("--persist", choices=["duckdb", "none"], default="duckdb", help="Where to persist")
     ap.add_argument("--duckdb-path", type=str, default=None, help="DuckDB database path")
     args = ap.parse_args()
@@ -378,6 +650,9 @@ if __name__ == "__main__":
         miles=args.miles,
         add_places_obesity_obx=args.add_places_obesity_obx,
         add_unemployment_obx=args.add_unemployment_obx,
+        include_sdoh=args.include_sdoh,
+        include_x12=args.include_x12,
+        include_fhir_eligibility=args.include_fhir_eligibility,
         persist=args.persist,
         duckdb_path=args.duckdb_path,
     )

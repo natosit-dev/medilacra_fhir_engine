@@ -116,6 +116,88 @@ CREATE TABLE IF NOT EXISTS orders (
 );
 CREATE INDEX IF NOT EXISTS ix_orders_patient ON orders(patient_id);
 CREATE INDEX IF NOT EXISTS ix_orders_enc ON orders(encounter_id);
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS coverage_profiles (
+      coverage_profile_id TEXT PRIMARY KEY,
+      patient_id TEXT,
+
+      employer_id TEXT,
+      employer_name TEXT,
+
+      payer_id TEXT,
+      payer_name TEXT,
+
+      plan_id TEXT,
+      plan_name TEXT,
+      plan_type TEXT,
+
+      worker_profile TEXT,
+      subscriber_relationship TEXT,
+
+      member_id TEXT,
+      group_number TEXT,
+      policy_number TEXT,
+
+      effective_start DATE,
+      effective_end DATE,
+
+      employer_provenance TEXT,
+      payer_provenance TEXT,
+      employer_payer_provenance TEXT,
+      plan_provenance TEXT,
+
+      assignment_seed TEXT,
+
+      created_ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS ix_coverage_profiles_patient
+      ON coverage_profiles(patient_id);
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS payer_members (
+      member_record_id TEXT PRIMARY KEY,
+      payer_id TEXT,
+      member_id TEXT,
+      first_name TEXT,
+      last_name TEXT,
+      date_of_birth DATE,
+      administrative_sex TEXT,
+      created_ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS ix_payer_members_payer
+      ON payer_members(payer_id);
+    CREATE INDEX IF NOT EXISTS ix_payer_members_payer_member
+      ON payer_members(payer_id, member_id);
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS payer_enrollments (
+      enrollment_id TEXT PRIMARY KEY,
+      member_record_id TEXT,
+      payer_id TEXT,
+      plan_id TEXT,
+      group_number TEXT,
+      effective_start DATE,
+      effective_end DATE,
+      status TEXT,
+      created_ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS ix_payer_enrollments_member
+      ON payer_enrollments(member_record_id);
+    CREATE INDEX IF NOT EXISTS ix_payer_enrollments_payer
+      ON payer_enrollments(payer_id);
+    CREATE INDEX IF NOT EXISTS ix_payer_enrollments_plan
+      ON payer_enrollments(plan_id);
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS payer_plans (
+      payer_id TEXT,
+      plan_id TEXT,
+      plan_name TEXT,
+      plan_type TEXT,
+      created_ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (payer_id, plan_id)
+    );
     """
 ]
 
@@ -128,7 +210,7 @@ def _exec_ddl(db_path: str | None = None):
             for stmt in parts:
                 # DuckDB accepts statements without trailing semicolons too
                 con.execute(stmt)
-        logger.info("DDL applied", extra={"extra": {"tables": ["patients","encounters","observations","transactions","messages","orders"]}})
+        logger.info("DDL applied", extra={"extra": {"tables": ["patients","encounters","observations","transactions","messages","orders","coverage_profiles","payer_members","payer_enrollments","payer_plans"]}})
 
 def init_db(db_path: str | None = None) -> str:
     """Initialize schema; returns the resolved DB path."""
@@ -263,6 +345,171 @@ def upsert_transaction(t: Dict[str, Any], db_path: str | None = None):
         logger.info("transaction.upsert", extra={"extra": {
             "transaction_id": t.get("transaction_id"), "encounter_id": t.get("encounter_id")
         }})
+
+def upsert_coverage_profile(profile: Dict[str, Any], db_path: str | None = None):
+    """Persist one instantiated CoverageProfile.
+
+    The table is intentionally not unique on patient_id so later coverage
+    history can coexist without a destructive schema change.
+    """
+    resolved_path = _resolve_db_path(db_path)
+    with writer(resolved_path) as con:
+        con.execute("BEGIN")
+        con.execute(
+            "DELETE FROM coverage_profiles WHERE coverage_profile_id = ?",
+            [profile["coverage_profile_id"]]
+        )
+        con.execute(
+            """INSERT INTO coverage_profiles (
+                 coverage_profile_id, patient_id,
+                 employer_id, employer_name,
+                 payer_id, payer_name,
+                 plan_id, plan_name, plan_type,
+                 worker_profile, subscriber_relationship,
+                 member_id, group_number, policy_number,
+                 effective_start, effective_end,
+                 employer_provenance, payer_provenance,
+                 employer_payer_provenance, plan_provenance,
+                 assignment_seed, created_ts
+               ) VALUES (
+                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                 COALESCE(?, CURRENT_TIMESTAMP)
+               )""",
+            [
+                profile.get("coverage_profile_id"),
+                profile.get("patient_id"),
+                profile.get("employer_id"),
+                profile.get("employer_name"),
+                profile.get("payer_id"),
+                profile.get("payer_name"),
+                profile.get("plan_id"),
+                profile.get("plan_name"),
+                profile.get("plan_type"),
+                profile.get("worker_profile"),
+                profile.get("subscriber_relationship"),
+                profile.get("member_id"),
+                profile.get("group_number"),
+                profile.get("policy_number"),
+                profile.get("effective_start"),
+                profile.get("effective_end"),
+                profile.get("employer_provenance"),
+                profile.get("payer_provenance"),
+                profile.get("employer_payer_provenance"),
+                profile.get("plan_provenance"),
+                profile.get("assignment_seed"),
+                profile.get("created_ts"),
+            ]
+        )
+        con.execute("COMMIT")
+        logger.info("coverage_profile.upsert", extra={"extra": {
+            "coverage_profile_id": profile.get("coverage_profile_id"),
+            "patient_id": profile.get("patient_id"),
+            "employer_id": profile.get("employer_id"),
+            "payer_id": profile.get("payer_id"),
+            "plan_id": profile.get("plan_id"),
+        }})
+
+
+def upsert_payer_member(member: Dict[str, Any], db_path: str | None = None):
+    """Persist one payer-local member record."""
+    resolved_path = _resolve_db_path(db_path)
+    with writer(resolved_path) as con:
+        con.execute("BEGIN")
+        con.execute(
+            "DELETE FROM payer_members WHERE member_record_id = ?",
+            [member["member_record_id"]],
+        )
+        con.execute(
+            """INSERT INTO payer_members (
+                 member_record_id, payer_id, member_id,
+                 first_name, last_name, date_of_birth,
+                 administrative_sex, created_ts
+               ) VALUES (?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))""",
+            [
+                member.get("member_record_id"),
+                member.get("payer_id"),
+                member.get("member_id"),
+                member.get("first_name"),
+                member.get("last_name"),
+                member.get("date_of_birth"),
+                member.get("administrative_sex"),
+                member.get("created_ts"),
+            ],
+        )
+        con.execute("COMMIT")
+        logger.info("payer_member.upsert", extra={"extra": {
+            "member_record_id": member.get("member_record_id"),
+            "payer_id": member.get("payer_id"),
+            "member_id": member.get("member_id"),
+        }})
+
+
+def upsert_payer_enrollment(enrollment: Dict[str, Any], db_path: str | None = None):
+    """Persist one payer-local enrollment record."""
+    resolved_path = _resolve_db_path(db_path)
+    status = enrollment.get("status")
+    if hasattr(status, "value"):
+        status = status.value
+
+    with writer(resolved_path) as con:
+        con.execute("BEGIN")
+        con.execute(
+            "DELETE FROM payer_enrollments WHERE enrollment_id = ?",
+            [enrollment["enrollment_id"]],
+        )
+        con.execute(
+            """INSERT INTO payer_enrollments (
+                 enrollment_id, member_record_id, payer_id, plan_id,
+                 group_number, effective_start, effective_end,
+                 status, created_ts
+               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))""",
+            [
+                enrollment.get("enrollment_id"),
+                enrollment.get("member_record_id"),
+                enrollment.get("payer_id"),
+                enrollment.get("plan_id"),
+                enrollment.get("group_number"),
+                enrollment.get("effective_start"),
+                enrollment.get("effective_end"),
+                status,
+                enrollment.get("created_ts"),
+            ],
+        )
+        con.execute("COMMIT")
+        logger.info("payer_enrollment.upsert", extra={"extra": {
+            "enrollment_id": enrollment.get("enrollment_id"),
+            "member_record_id": enrollment.get("member_record_id"),
+            "payer_id": enrollment.get("payer_id"),
+        }})
+
+
+def upsert_payer_plan(plan: Dict[str, Any], db_path: str | None = None):
+    """Persist one payer-local plan archetype idempotently."""
+    resolved_path = _resolve_db_path(db_path)
+    with writer(resolved_path) as con:
+        con.execute("BEGIN")
+        con.execute(
+            "DELETE FROM payer_plans WHERE payer_id = ? AND plan_id = ?",
+            [plan["payer_id"], plan["plan_id"]],
+        )
+        con.execute(
+            """INSERT INTO payer_plans (
+                 payer_id, plan_id, plan_name, plan_type, created_ts
+               ) VALUES (?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))""",
+            [
+                plan.get("payer_id"),
+                plan.get("plan_id"),
+                plan.get("plan_name"),
+                plan.get("plan_type"),
+                plan.get("created_ts"),
+            ],
+        )
+        con.execute("COMMIT")
+        logger.info("payer_plan.upsert", extra={"extra": {
+            "payer_id": plan.get("payer_id"),
+            "plan_id": plan.get("plan_id"),
+        }})
+
 
 def append_message(row: Dict[str, Any], db_path: str | None = None):
     resolved_path = _resolve_db_path(db_path)

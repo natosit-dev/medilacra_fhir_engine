@@ -6,7 +6,7 @@ from unified.page_catalog import PAGES
 
 
 def test_selected_page_inventory():
-    assert len(PAGES) == 13
+    assert len(PAGES) == 14
     sources = {page.source for page in PAGES}
     originals = {
         "apps/mvp0/medi_lacra_app.py",

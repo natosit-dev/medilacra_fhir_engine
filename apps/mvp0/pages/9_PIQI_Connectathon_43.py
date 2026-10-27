@@ -113,7 +113,7 @@ piqitt_default = str(default_piqitt_repo())
 piqitt_repo = st.text_input(
     "Local PIQITT repository",
     value=os.getenv("PIQITT_REPO", piqitt_default),
-    help="Expected to contain scripts/fhir_convert_backend.py. Default assumes medilacra and piqitt are sibling folders.",
+    help="Choose a PIQITT checkout containing scripts/fhir_convert_backend.py. Auto-detects a sibling of medilacra_fhir_engine, an embedded checkout, or the legacy apps/piqitt path.",
 )
 
 backend = backend_path(piqitt_repo)
@@ -121,6 +121,15 @@ if backend.exists():
     st.success(f"PIQITT converter found: {backend}")
 else:
     st.error(f"PIQITT converter not found: {backend}")
+    st.caption(
+        "PIQITT is a separate repository. Clone it into the selected location "
+        "if that directory does not already exist, or set PIQITT_REPO to an "
+        "existing checkout. The required file is scripts/fhir_convert_backend.py."
+    )
+    st.code(
+        f"git clone https://github.com/natosit-dev/piqitt.git {piqitt_repo}",
+        language="bash",
+    )
 
 source_mode = st.radio("HL7 source", ["Existing MediLacra / Disco output", "Upload HL7"], horizontal=True)
 local_files = _discover_hl7_files()
