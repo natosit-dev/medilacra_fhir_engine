@@ -29,6 +29,10 @@ jobs:
             tests/test_shn_reference_suite.py \
             tests/test_shn_provider_workflow.py \
             tests/test_shn_dtr_questionnaire_response.py
+      - name: Prepare public synthetic ZIP reference fixture for MVP-0
+        run: |
+          mkdir -p apps/mvp0/ref
+          cp apps/mvp0/tests/fixtures/zip_reference_smoke.csv apps/mvp0/ref/address.csv
       - name: M-004 eligibility, payer, cross-format, and DiScO regression
         run: |
           cd apps/mvp0
