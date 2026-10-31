@@ -359,16 +359,32 @@ class ReferenceSuiteRunner:
         operation.observed["checks"] = checks
 
         for field_name, passed in checks.items():
+            if field_name.startswith("timing."):
+                leg_name = field_name.split(".", 1)[1]
+                measured = next(
+                    (item for leg, item in assessments if leg == leg_name), {}
+                )
+                expected_value = {
+                    "metric": measured.get("metric"),
+                    "warn_ms": measured.get("warn_ms"),
+                    "fail_ms": measured.get("fail_ms"),
+                }
+                observed_value = {
+                    "status": measured.get("status"),
+                    "observed_ms": measured.get("observed_ms"),
+                }
+            else:
+                expected_value = operation.expected.get(field_name)
+                observed_value = _assertion_observed_value(
+                    field_name, operation.observed
+                )
             self._emit(
                 "assertion.evaluated",
                 "evaluation",
                 {
                     "field": field_name,
-                    "expected": operation.expected.get(field_name),
-                    "observed": _assertion_observed_value(
-                        field_name,
-                        operation.observed,
-                    ),
+                    "expected": expected_value,
+                    "observed": observed_value,
                     "passed": passed,
                 },
             )
