@@ -302,6 +302,11 @@ class ReferenceSuiteRunner:
                 "sent_correlation_id": response.sent_correlation_id,
                 "shn_leg_id": response.leg_id,
                 "elapsed_ms": round(response.elapsed_ms, 1),
+                "request_elapsed_ms": (
+                    round(response.request_elapsed_ms, 1)
+                    if response.request_elapsed_ms is not None else None
+                ),
+                "timing_assessment": response.timing_assessment,
                 "warning": response.warning,
                 "link": response.link,
                 "trace_url": response.trace_url,
@@ -328,6 +333,29 @@ class ReferenceSuiteRunner:
             operation.expected,
             operation.observed,
         )
+
+        # Optional timing assessments are produced by the transport client
+        # using operator-provided thresholds; disabled metrics never fail a test.
+        transport = operation.transport if isinstance(operation.transport, dict) else {}
+        assessments = []
+        if isinstance(transport.get("timing_assessment"), dict):
+            assessments.append(("direct", transport["timing_assessment"]))
+        for leg in ("first", "second"):
+            leg_data = transport.get(leg)
+            if isinstance(leg_data, dict) and isinstance(leg_data.get("timing_assessment"), dict):
+                assessments.append((leg, leg_data["timing_assessment"]))
+        if assessments:
+            operation.observed["timing_assessments"] = [
+                {"leg": leg, **assessment} for leg, assessment in assessments
+            ]
+        for leg, assessment in assessments:
+            self._emit(
+                "timing.assessed", "evaluation", {"leg": leg, **assessment}
+            )
+            if assessment.get("status") == "FAIL":
+                checks[f"timing.{leg}"] = False
+                operation.passed = False
+
         operation.observed["checks"] = checks
 
         for field_name, passed in checks.items():

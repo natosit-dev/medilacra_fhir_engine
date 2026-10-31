@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +26,7 @@ def _empty_searchset() -> dict[str, Any]:
 def build_crd_order_sign_request(
     reality: SHNMVP0Reality,
     payer_route: str = SHN_ROUTE_00301,
+    hook_instance: str | None = None,
 ) -> dict[str, Any]:
     """Project one MediLacra reality into a provider-side CRD order-sign request.
 
@@ -65,7 +67,7 @@ def build_crd_order_sign_request(
 
     return {
         "hook": "order-sign",
-        "hookInstance": f"{reality.case_id}-order-sign",
+        "hookInstance": hook_instance if hook_instance is not None else str(uuid.uuid4()),
         "context": {
             "userId": f"Practitioner/{reality.encounter.ordering_provider_id}",
             "patientId": patient["id"],
@@ -134,9 +136,16 @@ def crd_expected_invariants(
 
 def build_crd_case(seed: int = 43, payer_route: str = SHN_ROUTE_00301) -> dict[str, Any]:
     reality = build_reality(seed)
+    # Offline fixtures must remain deterministic by seed; live callers use the
+    # builder's fresh UUID4 default to represent each actual CDS invocation.
+    fixture_hook_instance = str(
+        uuid.uuid5(uuid.NAMESPACE_URL, f"medilacra:{reality.case_id}:order-sign")
+    )
     return {
         "reality": reality_manifest(reality),
-        "crd_request": build_crd_order_sign_request(reality, payer_route=payer_route),
+        "crd_request": build_crd_order_sign_request(
+            reality, payer_route=payer_route, hook_instance=fixture_hook_instance
+        ),
         "expected_invariants": crd_expected_invariants(reality, payer_route=payer_route),
     }
 

@@ -12,6 +12,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
+from .timing import assess_timing, load_timing_config
+
 
 DEFAULT_BASE_URL = "https://pa-test.shn-preview.org"
 DEFAULT_CONSOLE_URL = "https://admin.shn-preview.org"
@@ -34,13 +36,15 @@ class SHNResponse:
     warning: str | None = None
     link: str | None = None
     attempts: int = 1
+    request_elapsed_ms: float | None = None
+    timing_assessment: dict[str, Any] | None = None
 
     @property
     def ok(self) -> bool:
         return 200 <= self.status_code < 300
 
     def transport_dict(self) -> dict[str, Any]:
-        return {
+        result = {
             "status_code": self.status_code,
             "sent_correlation_id": self.sent_correlation_id,
             "correlation_id": self.correlation_id,
@@ -51,6 +55,11 @@ class SHNResponse:
             "link": self.link,
             "attempts": self.attempts,
         }
+        if self.request_elapsed_ms is not None:
+            result["request_elapsed_ms"] = round(self.request_elapsed_ms, 1)
+        if self.timing_assessment is not None:
+            result["timing_assessment"] = self.timing_assessment
+        return result
 
 
 class SHNProviderClient:
@@ -69,6 +78,7 @@ class SHNProviderClient:
         max_retries: int = 2,
         default_retry_after: int = 65,
         event_sink: Callable[[str, str, dict[str, Any]], Any] | None = None,
+        timing_config: dict[str, Any] | None = None,
     ) -> None:
         self.client_file = Path(client_file)
         self.base_url = base_url.rstrip("/")
@@ -79,6 +89,9 @@ class SHNProviderClient:
         self._token: str | None = None
         self._token_expires_at = 0.0
         self.event_sink = event_sink
+        self.timing_config = (
+            timing_config if timing_config is not None else load_timing_config()
+        )
 
     @classmethod
     def from_environment(
@@ -273,6 +286,7 @@ class SHNProviderClient:
     ) -> SHNResponse:
         sent_correlation_id = correlation_id or self._correlation_id(correlation_prefix)
         attempts = 0
+        request_elapsed_ms = 0.0
         started = time.monotonic()
 
         while True:
@@ -288,7 +302,9 @@ class SHNProviderClient:
                     "X-Correlation-Id": sent_correlation_id,
                 },
             )
+            request_started = time.monotonic()
             status, body, headers = self._open(request)
+            request_elapsed_ms += (time.monotonic() - request_started) * 1000.0
 
             if status != 429 or not retry_429 or attempts > self.max_retries:
                 break
@@ -329,6 +345,13 @@ class SHNProviderClient:
             warning=headers.get("Warning"),
             link=headers.get("Link"),
             attempts=attempts,
+            request_elapsed_ms=request_elapsed_ms,
+            timing_assessment=assess_timing(
+                path,
+                elapsed_ms=elapsed_ms,
+                request_elapsed_ms=request_elapsed_ms,
+                config=self.timing_config,
+            ),
         )
 
     def crd(self, payload: dict[str, Any], *, correlation_prefix: str) -> SHNResponse:
