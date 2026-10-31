@@ -27,6 +27,7 @@ jobs:
           python -m pytest -q \
             tests/test_shn_dtr_parameter_versions.py \
             tests/test_shn_reference_suite.py \
+            tests/test_shn_harness_regressions_20261031.py \
             tests/test_shn_provider_workflow.py \
             tests/test_shn_dtr_questionnaire_response.py
       - name: MVP-0 reference CLI import smoke

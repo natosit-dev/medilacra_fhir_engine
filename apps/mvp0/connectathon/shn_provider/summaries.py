@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from copy import deepcopy
 from typing import Any
 
 from connectathon.shn_dtr_parameters import (
@@ -27,6 +28,22 @@ def _walk(value: Any):
     elif isinstance(value, list):
         for child in value:
             yield from _walk(child)
+
+
+def _walk_with_resource(value: Any, source: dict[str, Any] | None = None):
+    """Walk nested CDS Hooks content while retaining the FHIR resource origin."""
+    if isinstance(value, dict):
+        if isinstance(value.get("resourceType"), str):
+            source = {
+                "resourceType": value["resourceType"],
+                "id": value.get("id"),
+            }
+        yield value, source
+        for child in value.values():
+            yield from _walk_with_resource(child, source)
+    elif isinstance(value, list):
+        for child in value:
+            yield from _walk_with_resource(child, source)
 
 
 def _extension_scalar(extension: dict[str, Any]) -> Any:
@@ -71,23 +88,50 @@ def summarize_crd(
     body: dict[str, Any],
     expected: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    values: dict[str, Any] = {}
+    # Preserve each Coverage Information block, including repeated children
+    # and parent FHIR resource identity. Do not select the last observed value.
+    occurrences: list[dict[str, Any]] = []
+    field_values: dict[str, list[Any]] = {}
     questionnaires: list[str] = []
 
-    for node in _walk(body):
+    for node, source in _walk_with_resource(body):
         if node.get("url") != CRD_COVERAGE_INFORMATION:
             continue
+        occurrences.append({
+            "source_resource": deepcopy(source),
+            "extension": deepcopy(node),
+        })
         for child in node.get("extension", []):
+            if not isinstance(child, dict):
+                continue
             key = child.get("url")
             value = _extension_scalar(child)
+            if not key or value is None:
+                continue
+            field_values.setdefault(key, []).append(value)
             if key == "questionnaire" and value:
                 questionnaires.append(str(value))
-            elif key and value is not None:
-                values[key] = value
+
+    # The historical scalar fields remain available for unambiguous answers.
+    # Conflicting values are explicitly indeterminate, not last-wins.
+    values: dict[str, Any] = {}
+    ambiguous_fields: list[str] = []
+    for key, collected in field_values.items():
+        unique: list[Any] = []
+        for value in collected:
+            if not any(value == previous for previous in unique):
+                unique.append(value)
+        if len(unique) == 1:
+            values[key] = unique[0]
+        elif len(unique) > 1:
+            values[key] = None
+            ambiguous_fields.append(key)
 
     unique_questionnaires = list(dict.fromkeys(questionnaires))
     if len(unique_questionnaires) > 1:
         questionnaire: str | list[str] | None = unique_questionnaires
+        if "questionnaire" not in ambiguous_fields:
+            ambiguous_fields.append("questionnaire")
     elif unique_questionnaires:
         questionnaire = unique_questionnaires[0]
     else:
@@ -104,14 +148,22 @@ def summarize_crd(
         "coverage-assertion-id": values.get("coverage-assertion-id"),
         "questionnaire": questionnaire,
         "questionnaire_present": bool(questionnaire),
+        "coverage_information": occurrences,
+        "ambiguous_fields": sorted(ambiguous_fields),
         "error_text": error_text(body),
     }
 
     if expected is not None:
+        unknown = set(expected) - set(summary)
+        if unknown:
+            raise ValueError(
+                f"unknown CRD assertion fields: {sorted(unknown)}"
+            )
+        if not expected:
+            raise ValueError("CRD expectations must not be empty")
         checks = {
-            key: summary.get(key) == value
+            key: summary.get(key) == value and key not in ambiguous_fields
             for key, value in expected.items()
-            if key in summary
         }
         summary["expected_checks"] = checks
         summary["behavior_match"] = all(checks.values())
@@ -271,13 +323,22 @@ def summarize_pas(
     }
 
     if expected is not None:
+        unknown = set(expected) - (set(summary) | {"authorization_required"})
+        if unknown:
+            raise ValueError(
+                f"unknown PAS assertion fields: {sorted(unknown)}"
+            )
+        if not expected:
+            raise ValueError("PAS expectations must not be empty")
         checks = {
             key: summary.get(key) == value
             for key, value in expected.items()
-            if key in summary
+            if key != "authorization_required"
         }
-        if expected.get("authorization_required"):
-            checks["authorization_required"] = bool(authorization)
+        if "authorization_required" in expected:
+            checks["authorization_required"] = (
+                bool(authorization) == bool(expected["authorization_required"])
+            )
         summary["expected_checks"] = checks
         summary["behavior_match"] = all(checks.values())
     return summary

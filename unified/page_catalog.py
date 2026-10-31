@@ -38,4 +38,5 @@ PAGES: tuple[ExistingPage, ...] = (
 
     # Evidence and other previously working experimental tools.
     ExistingPage("Inspection & Tools", "evidence", "Evidence", "apps/workbench/pages/5_Evidence.py", "🔎"),
+    ExistingPage("Inspection & Tools", "shn-testing-requirements", "SHN Testing Requirements", "apps/workbench/pages/6_SHN_Testing_Requirements.py", "📋"),
 )

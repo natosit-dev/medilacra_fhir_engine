@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "enabled": false,
+  "source": "Local experimental thresholds only; no verified SHN timing contract",
+  "rules": {
+    "/cds-services/shn-order-sign": {
+      "metric": "request_elapsed_ms",
+      "warn_ms": null,
+      "fail_ms": null
+    },
+    "/cds-services/shn-order-dispatch": {
+      "metric": "request_elapsed_ms",
+      "warn_ms": null,
+      "fail_ms": null
+    },
+    "/Questionnaire/$questionnaire-package": {
+      "metric": "request_elapsed_ms",
+      "warn_ms": null,
+      "fail_ms": null
+    },
+    "/Claim/$submit": {
+      "metric": "request_elapsed_ms",
+      "warn_ms": null,
+      "fail_ms": null
+    },
+    "/Claim/$inquire": {
+      "metric": "request_elapsed_ms",
+      "warn_ms": null,
+      "fail_ms": null
+    }
+  }
+}
