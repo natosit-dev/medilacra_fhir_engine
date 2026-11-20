@@ -4,8 +4,8 @@
 - **Status:** Proposed / documentation only — not implemented or accepted
 - **Recorded:** 2026-11-20
 - **Target repository:** [natosit-dev/medilacra_fhir_engine](https://github.com/natosit-dev/medilacra_fhir_engine)
-- **Working branch:** \`experiment/lucifer-adt-dft-20261120\`
-- **Base:** \`main\` at \`35b4b88c5c7e71da5965c5731c5efeac22673492\`
+- **Working branch:** `experiment/lucifer-adt-dft-20261120`
+- **Base:** `main` at `35b4b88c5c7e71da5965c5731c5efeac22673492`
 - **Message scope:** HL7 v2.5 **ADT** and **DFT** only; initial A01, P03, and A03 scenario
 - **Source-of-intent appendix:** [Raw prompt history](LUCIFER_ADT_DFT_RAW_PROMPT_HISTORY_2026-11-20.md)
 - **Implementation state:** Existing source inspected; no new production or test code is claimed by this plan.
@@ -43,7 +43,7 @@ A key distinction: Beatrice is the faithful representation of a known synthetic 
 
 **Terminology:** PV1-47 is *Total Charges*, not inherently an adjudicated insurance **claim total**. The MVP examines a contract-defined synthetic encounter-charge total. Do not claim the experiment models full claim adjudication.
 
-**HL7 semantics boundary:** PV1-45 = Discharge Date/Time is notoriously workflow/interface-dependent. The scenario contract deliberately defines blank PV1-45 as “this source has not yet reported discharge” and says when PV1-47 is or is not populated. These rules are **local contract terms**, not universal claims about HL7. In HL7 v2, an empty field is not interchangeable with the explicit null/delete token \`""\`. The NULL conversion occurs **after parsing**, in receiver mapping, before zero defaulting.
+**HL7 semantics boundary:** PV1-45 = Discharge Date/Time is notoriously workflow/interface-dependent. The scenario contract deliberately defines blank PV1-45 as “this source has not yet reported discharge” and says when PV1-47 is or is not populated. These rules are **local contract terms**, not universal claims about HL7. In HL7 v2, an empty field is not interchangeable with the explicit null/delete token `""`. The NULL conversion occurs **after parsing**, in receiver mapping, before zero defaulting.
 
 **Persistence mechanism:** model a receiver policy that saves the earliest asserted total and declines subsequent update/reconciliation. The identifier and record-creation timestamp may be accurate even while the monetary assertion is false. Contractual betrayal is evidenced by the discrepancy between agreed update obligations and actual materialized state.
 
@@ -64,17 +64,17 @@ Do not declare the receiver incorrect merely because it differs from a preferred
 
 ## 4. Codebase inventory and harvest basis
 
-The **target repository is the unified Medilacra FHIR Engine repo**, with the original MVP-0 source retained at \`apps/mvp0/\`. The name “FHIR Engine” does **not** narrow Lucifer's first message scope to FHIR.
+The **target repository is the unified Medilacra FHIR Engine repo**, with the original MVP-0 source retained at `apps/mvp0/`. The name “FHIR Engine” does **not** narrow Lucifer's first message scope to FHIR.
 
 Inspected target paths at branch creation:
 
-- \`apps/mvp0/experiments/disco_inferno/\`: \`run_experiment.py\`, \`corruptions.py\`, \`compare.py\`, \`materialize.py\`, \`exports.py\`, \`reporting.py\`, \`process_control.py\`, \`offline_sdoh.py\`, existing README and evidence directories.
-- \`apps/mvp0/hl7_demo/messages.py\`: \`build_adt()\` currently builds A01; \`build_dft()\` builds P03.
-- \`apps/mvp0/hl7_demo/segments.py\`: PV1 includes fields 44 and 45; PV1-47 is not populated. FT1 includes FT1-11; FT1-1 is fixed to \`1\` in its segment builder, needing care if several FT1s appear within one message.
-- \`apps/mvp0/hl7_demo/generators.py\`: generated encounters currently have an admit and discharge datetime; transaction timestamps and IDs are not all deterministic.
-- \`apps/mvp0/experiments/disco_inferno/exports.py\`: bulk HL7 exports currently include ADT^A01, DFT^P03 and other message families; its use is reusable, but Lucifer needs ordered per-event output.
+- `apps/mvp0/experiments/disco_inferno/`: `run_experiment.py`, `corruptions.py`, `compare.py`, `materialize.py`, `exports.py`, `reporting.py`, `process_control.py`, `offline_sdoh.py`, existing README and evidence directories.
+- `apps/mvp0/hl7_demo/messages.py`: `build_adt()` currently builds A01; `build_dft()` builds P03.
+- `apps/mvp0/hl7_demo/segments.py`: PV1 includes fields 44 and 45; PV1-47 is not populated. FT1 includes FT1-11; FT1-1 is fixed to `1` in its segment builder, needing care if several FT1s appear within one message.
+- `apps/mvp0/hl7_demo/generators.py`: generated encounters currently have an admit and discharge datetime; transaction timestamps and IDs are not all deterministic.
+- `apps/mvp0/experiments/disco_inferno/exports.py`: bulk HL7 exports currently include ADT^A01, DFT^P03 and other message families; its use is reusable, but Lucifer needs ordered per-event output.
 
-**Related upstream work, not present in target main:** \`natosit-dev/medilacra\` branch \`experiment/disco-inferno-lucifer\` has a newer \`experiments/disco_inferno/lucifer.py\` and \`tests/test_disco_inferno_lucifer.py\`. That implementation models two **synthetic privacy-evidence** deceptions (“phantom violation” and “concealed violation”) by modifying tabular evidence about invented access events. It **does not** yet implement ADT/DFT financial progression, the versioned interface contract, or persistent receiver state. Treat it as a source to selectively harvest, not as a working DFT test or evidence of external-system behavior. It also explicitly does not make legal HIPAA findings.
+**Related upstream work, not present in target main:** `natosit-dev/medilacra` branch `experiment/disco-inferno-lucifer` has a newer `experiments/disco_inferno/lucifer.py` and `tests/test_disco_inferno_lucifer.py`. That implementation models two **synthetic privacy-evidence** deceptions (“phantom violation” and “concealed violation”) by modifying tabular evidence about invented access events. It **does not** yet implement ADT/DFT financial progression, the versioned interface contract, or persistent receiver state. Treat it as a source to selectively harvest, not as a working DFT test or evidence of external-system behavior. It also explicitly does not make legal HIPAA findings.
 
 **Existing capabilities worth reusing:** seeded synthetic world generation; Beatrice/Inferno separation; controlled corruption receipts; DuckDB source materialization; dated export/ZIP bundles; process control; offline mode; existing Streamlit app integration. Preserve the current app architecture; do not make a new UI or deployment a prerequisite.
 
@@ -86,10 +86,10 @@ Inspected target paths at branch creation:
 | --- | --- | --- |
 | Patient, encounter, charge generation | Existing synthetic models and generators | Reuse with a deterministic event-profile override |
 | Beatrice, comparison, manifest, bundle | Existing Disco Inferno primitives | Extend to an event-sourced witness and downstream assertions |
-| ADT A01 and DFT P03 builders | Present under \`apps/mvp0/hl7_demo\` | Reuse and make the scenario timeline/event identity explicit |
-| ADT A03 discharge | Not exposed by the inspected \`build_adt\` A01 path | Add scenario-specific discharge message building |
+| ADT A01 and DFT P03 builders | Present under `apps/mvp0/hl7_demo` | Reuse and make the scenario timeline/event identity explicit |
+| ADT A03 discharge | Not exposed by the inspected `build_adt` A01 path | Add scenario-specific discharge message building |
 | Active encounter and withheld final total | Generator normally has discharge datetime from start | Represent encounter **state at each event**, not just final snapshot |
-| PV1-47 | Existing \`seg_pv1\` leaves it blank | Add contract-driven, conditional total-charge population |
+| PV1-47 | Existing `seg_pv1` leaves it blank | Add contract-driven, conditional total-charge population |
 | FT1 events | FT1-11 amounts exist; DFT builder supports a list | Emit incremental P03 events with consistent visit linkage; handle FT1-1 numbering for multiple FT1s |
 | Time determinism | MSH clock/control IDs, generated UUIDs and transaction dates not fully seed-controlled | Inject fixed synthetic event clock and deterministic control/transaction/visit IDs |
 | Contract | No dedicated ADT/DFT financial semantic contract object identified | Add versioned, machine-readable contract with human-readable obligations |
@@ -98,18 +98,18 @@ Inspected target paths at branch creation:
 | Lucifer provenance | Existing upstream privacy fixture only; absent from target | Document selective harvest and preserve privacy case as distinct experimental branch/fixture |
 | Tests | Existing Disco tests protect model invariants | Add sequence, contract, replay, persistence, determinism, and comparison tests |
 
-**Assessment boundary:** source inspection, not test execution. Do not present missing features as formally proven absent from every branch or integration; the table describes inspected paths of target \`main\` at the pinned base commit.
+**Assessment boundary:** source inspection, not test execution. Do not present missing features as formally proven absent from every branch or integration; the table describes inspected paths of target `main` at the pinned base commit.
 
 ## 6. High-level build sequence
 
 ### Phase A — Contract and event witness
 
-Create \`LUCIFER-FIN-001\` configuration with:
+Create `LUCIFER-FIN-001` configuration with:
 - HL7 version and message profiles; explicit fields and interpretation obligations;
-- patient/encounter/visit identity and consistency rules (\`PID-3\`, \`PV1-19\`, \`FT1-2\`, \`MSH-10\`);
+- patient/encounter/visit identity and consistency rules (`PID-3`, `PV1-19`, `FT1-2`, `MSH-10`);
 - sender-specific meaning of blank PV1-45, availability of PV1-47, and finalization/update conditions;
 - FT1 charges, currency, posting order, DFT aggregation semantics, and permitted corrections;
-- replay seeds (default reality \`42\`, Inferno \`666\`), fixed synthetic clock, expected final charge total;
+- replay seeds (default reality `42`, Inferno `666`), fixed synthetic clock, expected final charge total;
 - separate expected outcomes for faithful and betrayed receiver policies.
 
 Add an immutable event ledger to the DuckDB witness. Preserve the original source-reality tables. Do not mutate Beatrice while running Lucifer.
@@ -141,11 +141,11 @@ Run complete sequence on both receivers, compare final assertions with Beatrice 
 
 ### Phase E — Inspectable artifact bundle and modest app entry
 
-Use existing \`apps/mvp0/experiments/disco_inferno\` ZIP/report/manifest facilities. Add one CLI-accessible scenario invocation first, then optionally expose it in the existing unified Streamlit shell. No new web service, multiuser support, or externally hosted SUT is needed for MVP.
+Use existing `apps/mvp0/experiments/disco_inferno` ZIP/report/manifest facilities. Add one CLI-accessible scenario invocation first, then optionally expose it in the existing unified Streamlit shell. No new web service, multiuser support, or externally hosted SUT is needed for MVP.
 
 ## 7. Proposed output contract
 
-\`\`\`text
+```text
 lucifer_fin_001/<run-id>/
   contract.yaml                   # Versioned semantic agreement
   scenario.json                   # Inputs, seeds, synthetic timeline, effective configuration
@@ -157,7 +157,7 @@ lucifer_fin_001/<run-id>/
   comparison.md                   # Contract obligation / actual / contradiction
   manifest.json                   # Source revision, config, hashes, run metadata
   DISCO_INFERNO_LUCIFER_<run-id>.zip
-\`\`\`
+```
 
 **Timestamp semantics:** distinguish occurred-at, sent-at, received-at, persisted-at, and artifact-generated-at. The synthetic clock is fixed for replay; physical run creation time need not be fixed. ID uniqueness is evaluated independently of whether a claim is true.
 
@@ -181,7 +181,7 @@ These are **planned acceptance tests**; none is currently claimed to pass in the
 - Whether downstream contract says reconcile to latest PV1-47, recalculate using FT1, or both. Define clearly; do **not** infer universal rules from HL7.
 - How FT1 adjustments, cancellations, credits, duplicate transmissions, and message reordering behave. Exclude initially or freeze a precise policy; do not silently normalize.
 - Receiver's first-write key and asserted record ID must be distinguishable from MSH-10, FT1-2 and visit ID.
-- Ensure a literal \`0\` is distinguishable from blank, SQL NULL, explicit HL7 delete, unknown, incomplete, and finalized zero.
+- Ensure a literal `0` is distinguishable from blank, SQL NULL, explicit HL7 delete, unknown, incomplete, and finalized zero.
 - Source code from the original Medilacra Lucifer branch may be harvested selectively, but source/commit/path provenance must be recorded; avoid silently replacing target baseline files.
 - This is **synthetic local reproduction**. No claim that SHN, an EHR, claims system, or regulator has exhibited this defect. No certification, HIPAA finding, or general conformance verdict.
 - Do not expand to other message families, introduce a universal entropy score, or build a new app/deployment for a single scenario.
@@ -196,15 +196,15 @@ These are **planned acceptance tests**; none is currently claimed to pass in the
 | 2026-11-20 | PV1-45 ambiguity and explicit interface specifications are *the contractual seam* | User correction |
 | 2026-11-20 | Composite scenario first; fix variables and reproduce; isolate **after** unexpected outcome; recombine | User correction |
 | 2026-11-20 | ADT and DFT only for initial implementation | User scope decision |
-| 2026-11-20 | New branch off Medilacra FHIR Engine; plan and full raw prompts under \`docs/\` | User instruction |
+| 2026-11-20 | New branch off Medilacra FHIR Engine; plan and full raw prompts under `docs/` | User instruction |
 
 This is a **prospective build plan**. Earlier interpretations are not retroactively described as original August design. Historical prompt quotations and their attribution are preserved in the [prompt appendix](LUCIFER_ADT_DFT_RAW_PROMPT_HISTORY_2026-11-20.md).
 
 ## 11. Traceable sources
 
 **Primary design/provenance documents supplied for this conversation:**
-- \`Disco_Inferno_Story_v1.1_2026-09-14.docx\` (2026-09-14): story, prior implementation and Lucifer-as-betrayal distinction.
-- \`Disco_Inferno_Name_Design_Lineage_Current_Meaning_v1.2_SANITIZED.docx\` (2026-09-11): source/evidence classes, chronological naming, explicit Lucifer reinterpretation and synthetic/legal boundaries.
+- `Disco_Inferno_Story_v1.1_2026-09-14.docx` (2026-09-14): story, prior implementation and Lucifer-as-betrayal distinction.
+- `Disco_Inferno_Name_Design_Lineage_Current_Meaning_v1.2_SANITIZED.docx` (2026-09-11): source/evidence classes, chronological naming, explicit Lucifer reinterpretation and synthetic/legal boundaries.
 
 **Inspected source and historical implementations:**
 - [Target FHIR Engine repo, pinned base](https://github.com/natosit-dev/medilacra_fhir_engine/tree/35b4b88c5c7e71da5965c5731c5efeac22673492)
