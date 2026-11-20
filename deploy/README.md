@@ -4,7 +4,7 @@
 
 ## Harvested behavior
 
-The application is still the unified Streamlit `app.py`, `unified/page_catalog.py`, and `unified/legacy.py` from `medilacra_fhir_engine`. Existing SHN CRD/DTR/PAS reference runners and Workbench TestScript execution remain unchanged. Existing SHN `run.json` / `events.jsonl` and Workbench evidence formats are preserved, not rewritten. October 23 accepted local reference: commit `82c184146afcac3979ed86808ddf91c6d5fc207d`.
+The application is still the unified Streamlit `app.py`, `unified/page_catalog.py`, and `unified/legacy.py` from `medilacra_fhir_engine`. Existing SHN CRD/DTR/PAS reference runners and Workbench TestScript execution remain unchanged. Existing SHN `run.json` / `events.jsonl` and Workbench evidence formats are preserved. The two existing execution-context builders now add optional `medilacra_instance_id`, `medilacra_host_port`, and `medilacra_source_ref` fields so each test run can be traced to its isolated container without changing assertion logic or event schemas. October 23 accepted local reference: commit `82c184146afcac3979ed86808ddf91c6d5fc207d`.
 
 ## New deployment wrapper
 
