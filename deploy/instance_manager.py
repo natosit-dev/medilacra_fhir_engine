@@ -172,6 +172,7 @@ def compose_text(root: Path, record: dict) -> str:
         '      HOME: "/home/medilacra"',
         '      XDG_CACHE_HOME: "/workspace/state/cache"',
         '      PYTHONUNBUFFERED: "1"',
+        '      MEDILACRA_DB_PATH: "/opt/medilacra/apps/mvp0/data/medilacra.duckdb"',
     ]
     if secret:
         lines.append('      SHN_CLIENT_FILE: "/run/secrets/shn-client.json"')
