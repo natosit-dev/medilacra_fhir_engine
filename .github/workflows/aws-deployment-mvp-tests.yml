@@ -4,12 +4,14 @@ on:
   push:
     paths:
       - 'deploy/**'
+      - 'tests/test_aws_instance_provenance.py'
       - 'apps/workbench/toolbench/logging.py'
       - 'apps/mvp0/connectathon/shn_provider/run_logging.py'
       - '.github/workflows/aws-deployment-mvp-tests.yml'
   pull_request:
     paths:
       - 'deploy/**'
+      - 'tests/test_aws_instance_provenance.py'
       - 'apps/workbench/toolbench/logging.py'
       - 'apps/mvp0/connectathon/shn_provider/run_logging.py'
       - '.github/workflows/aws-deployment-mvp-tests.yml'
