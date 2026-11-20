@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import json
 import platform
 import subprocess
@@ -112,6 +113,9 @@ def execution_context(execution_mode: str) -> dict[str, Any]:
         "platform_system": platform.system(),
         "platform_release": platform.release(),
         "log_schema_version": LOG_SCHEMA_VERSION,
+        "medilacra_instance_id": os.getenv("MEDILACRA_INSTANCE_ID"),
+        "medilacra_host_port": os.getenv("MEDILACRA_HOST_PORT"),
+        "medilacra_source_ref": os.getenv("MEDILACRA_SOURCE_REF"),
     }
 
 
