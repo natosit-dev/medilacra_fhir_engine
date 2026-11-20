@@ -11,63 +11,63 @@
 
 The September 11 sanitized provenance document preserves this user-originated later reinterpretation of a reserved name:
 
-**2026-09-11 — historical user-origin prompt, quoted from \`Disco_Inferno_Name_Design_Lineage_Current_Meaning_v1.2_SANITIZED.docx\`:**
+**2026-09-11 — historical user-origin prompt, quoted from `Disco_Inferno_Name_Design_Lineage_Current_Meaning_v1.2_SANITIZED.docx`:**
 
-\`\`\`text
+```text
 Lol Lucifer should be for betrayal- synthetic fake HIPAA violations                  🤣🤣🤣🤣
-\`\`\`
+```
 
-This historical wording establishes **Lucifer = betrayal** as a preexisting direction, not an idea invented after the November MythBusters discussion. It refers to simulated evidence, not a real HIPAA legal finding. The original Disco Inferno MVP, Beatrice naming, 42/666 seeds, and operator-selection lineage are documented in that provenance file and \`Disco_Inferno_Story_v1.1_2026-09-14.docx\`. The full earlier 17-prompt Disco Inferno corpus is **not reproduced here**; this appendix is scoped to the Lucifer ADT/DFT design thread.
+This historical wording establishes **Lucifer = betrayal** as a preexisting direction, not an idea invented after the November MythBusters discussion. It refers to simulated evidence, not a real HIPAA legal finding. The original Disco Inferno MVP, Beatrice naming, 42/666 seeds, and operator-selection lineage are documented in that provenance file and `Disco_Inferno_Story_v1.1_2026-09-14.docx`. The full earlier 17-prompt Disco Inferno corpus is **not reproduced here**; this appendix is scoped to the Lucifer ADT/DFT design thread.
 
 ## November 20 — verbatim user prompts
 
 ### RAW-N01 — revive Lucifer following the safety discussion
 
-\`\`\`text
+```text
 The worst outcome isn't necessarily that the system stops working. It might be that it continues working while producing believable falsehoods.
 
 Yoooooo we should build Lucifer! 
-\`\`\`
+```
 
 **Attribution note:** The first two sentences quote an earlier assistant response. The user's proposed action is the second paragraph.
 
 ### RAW-N02 — DFT total, missing discharge, default zero, persistence
 
-\`\`\`text
+```text
 I'm thinking a DFT message that has a charge field that defaults null to 0. Something like claim total. If visit has no value in PV1:45, the visit is considered still in progress so no total claim field is populated. That changes to null, which defaults to 0 with a unique id and timestamp. It stays that way no matter how many claims are added
-\`\`\`
+```
 
 ### RAW-N03 — contract as object of betrayal; PV1-45 ambiguity
 
-\`\`\`text
+```text
  one distinction: HL7 doesn't inherently say that an empty PV1-45 means an encounter must be active, or that PV1-47 must remain empty until discharge. We would establish that behavior in our synthetic sender's contract.
 
 The contract is what is betrayed. PV1:45 is NOTORIOUSLY ambiguous, and requires  explicit specs and mapping 
-\`\`\`
+```
 
 **Attribution note:** First paragraph quotes an assistant caveat. The second paragraph is the user's correction. Preserve the distinction; the normative object is the explicit interface contract.
 
 ### RAW-N04 — composite first; reproduce; isolate then recombine
 
-\`\`\`text
+```text
 test those separately before combining them, because otherwise we wouldn't know which defect actually produced the persistent falsehood.
 
 No, better to test them together. Define and record the variables. See if it is reproducible. If it fails, then isolate the failure, then recombine. 
-\`\`\`
+```
 
 **Attribution note:** First paragraph quotes an earlier assistant proposal; second is the user's methodological correction.
 
 ### RAW-N05 — message scope; gap analysis and MVP request
 
-\`\`\`text
+```text
 So this will be DFT messages, ADT messages only at this point. Let's see a gap analysis and high level build to MVP 
-\`\`\`
+```
 
 ### RAW-N06 — target repository, branch and documentation request
 
-\`\`\`text
+```text
 Let's create a new branch off Medilacra FHIR Engine for Lucifer. Add this to docs, full trim, raw prompt history.
-\`\`\`
+```
 
 ## Interpretation boundaries (not raw prompts)
 
@@ -82,8 +82,8 @@ The following are **editorial observations from the sequence**, not quotations f
 
 ## Source identity and change rules
 
-- Current thread: directly visible user messages, captured as \`RAW-N01\` through \`RAW-N06\`.
-- Historical provenance: \`Disco_Inferno_Name_Design_Lineage_Current_Meaning_v1.2_SANITIZED.docx\` (2026-09-11), plus \`Disco_Inferno_Story_v1.1_2026-09-14.docx\`. Historical quotations are explicitly separated.
+- Current thread: directly visible user messages, captured as `RAW-N01` through `RAW-N06`.
+- Historical provenance: `Disco_Inferno_Name_Design_Lineage_Current_Meaning_v1.2_SANITIZED.docx` (2026-09-11), plus `Disco_Inferno_Story_v1.1_2026-09-14.docx`. Historical quotations are explicitly separated.
 - **Do not silently edit the RAW blocks.** Append corrections or later turns as a new section with a capture date and provenance note; preserve earlier wording even when technical decisions change.
 - Avoid back-projecting the November ADT/DFT scenario into August/September original design intent.
 
